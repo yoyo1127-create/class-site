@@ -9,7 +9,7 @@ window.CLASS_CONFIG = {
   className: "כיתה ה'2",
 
   // שם בית הספר (לא חובה)
-  schoolName: "",
+  schoolName: "בית ספר אור זבולון, אריאל",
 
   // המזהה של ה-Google Sheet (החלק הארוך בכתובת שבין /d/ ל-/edit)
   sheetId: "",

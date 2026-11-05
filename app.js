@@ -139,7 +139,7 @@
       el.querySelectorAll(".day-chip").forEach((b) => {
         const on = +b.dataset.col === col;
         b.classList.toggle("active", on);
-        if (on) b.scrollIntoView({ block: "nearest", inline: "center" });
+        if (on) scrollIntoRow(b);
       });
     };
     el.querySelectorAll(".day-chip").forEach((b) => b.addEventListener("click", () => showDay(+b.dataset.col)));
@@ -261,6 +261,13 @@
       : `<p class="empty">אין קישורים עדיין.</p>`;
   }
 
+  // גלילה אופקית בלבד של שורת כפתורים, בלי להזיז את הדף למטה
+  function scrollIntoRow(el) {
+    const row = el.parentElement;
+    const target = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;
+    row.scrollTo({ left: target, behavior: "smooth" });
+  }
+
   // ---------- כרטיסיות ----------
   const loaded = {};
   function run(tab) {
@@ -287,7 +294,7 @@
       const on = b.dataset.tab === tab;
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on);
-      if (on) b.scrollIntoView({ block: "nearest", inline: "center" });
+      if (on) scrollIntoRow(b);
     });
     document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tab));
     run(tab);

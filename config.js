@@ -15,7 +15,7 @@ window.CLASS_CONFIG = {
   sheetId: "",
 
   // המזהה של היומן בגוגל (נראה בערך כך: abc123...@group.calendar.google.com)
-  calendarId: "",
+  calendarId: "c_f352eb49b5b1211c2013d898cf2bf091f6e0f5e99192028e6176fbc97d1b1098@group.calendar.google.com",
 
   // מפתח API של גוגל (לא חובה). בלעדיו כרטיסיית "אירועים קרובים"
   // מוצגת בתצוגת הרשימה של גוגל במקום ברשימה המעוצבת שלנו.

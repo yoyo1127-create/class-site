@@ -118,7 +118,7 @@
         const v = (r[i] || "").trim();
         if (i === 0) return `<td class="hour"><bdi dir="ltr">${esc(v)}</bdi></td>`;
         if (!v) return `<td class="blank"></td>`;
-        return `<td class="${i === todayCol ? "today" : ""}" style="background:${subjectColor(v)}">${esc(v)}</td>`;
+        return `<td class="${i === todayCol ? "today" : ""}" style="background:${subjectColor(splitCell(v)[0])}">${cellHtml(v)}</td>`;
       }).join("") + "</tr>";
     }).join("");
 
@@ -153,6 +153,16 @@
     return i < 0 ? [String(h).trim(), ""] : [h.slice(0, i).trim(), h.slice(i + 1).trim()];
   }
 
+  // תא בפורמט "מקצוע | מורה" (המורה לא חובה)
+  function splitCell(v) {
+    const [subject, ...rest] = String(v).split("|");
+    return [subject.trim(), rest.join("|").trim()];
+  }
+  function cellHtml(v) {
+    const [subject, teacher] = splitCell(v);
+    return `<span class="subj">${esc(subject)}</span>${teacher ? `<span class="teacher">${esc(teacher)}</span>` : ""}`;
+  }
+
   function dayLessons(body, col) {
     const has = (r) => (r[col] || "").trim();
     const first = body.findIndex(has);
@@ -165,7 +175,7 @@
         return `<li class="break-item"><span class="num"><bdi dir="ltr">${esc(time)}</bdi></span><span>${esc(label)}</span></li>`;
       }
       if (!has(r)) return "";
-      return `<li style="background:${subjectColor(r[col].trim())}"><span class="num"><bdi dir="ltr">${esc(r[0])}</bdi></span><span>${esc(r[col])}</span></li>`;
+      return `<li style="background:${subjectColor(splitCell(r[col])[0])}"><span class="num"><bdi dir="ltr">${esc(r[0])}</bdi></span><span>${cellHtml(r[col])}</span></li>`;
     }).join("");
   }
 

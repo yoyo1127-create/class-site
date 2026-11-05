@@ -16,6 +16,29 @@
   function fmt(d, opts) { return d.toLocaleDateString("he-IL", { timeZone: CFG.timezone, ...opts }); }
   function $(id) { return document.getElementById(id); }
 
+  // ---------- תאריך עברי ----------
+  // מספר באותיות עבריות: 25 → כ״ה, 787 → תשפ״ז, 15 → ט״ו
+  function gematria(n) {
+    const ones = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"];
+    const tens = ["", "י", "כ", "ל", "מ", "נ", "ס", "ע", "פ", "צ"];
+    const hundreds = ["", "ק", "ר", "ש", "ת"];
+    let out = "";
+    let h = Math.floor(n / 100);
+    while (h > 4) { out += "ת"; h -= 4; }
+    out += hundreds[h];
+    const rest = n % 100;
+    if (rest === 15) out += "טו";
+    else if (rest === 16) out += "טז";
+    else out += tens[Math.floor(rest / 10)] + ones[rest % 10];
+    return out.length === 1 ? out + "׳" : out.slice(0, -1) + "״" + out.slice(-1);
+  }
+  const HEB_FMT = new Intl.DateTimeFormat("he-IL-u-ca-hebrew", { day: "numeric", month: "long", year: "numeric", timeZone: CFG.timezone });
+  function hebDate(d, withYear = true) {
+    const parts = Object.fromEntries(HEB_FMT.formatToParts(d).map((p) => [p.type, p.value]));
+    const text = `${gematria(+parts.day)} ב${parts.month}`;
+    return withYear ? `${text} ${gematria(+parts.year % 1000)}` : text;
+  }
+
   // תאריך מהגיליון: 5/11/2026, 5.11.2026 או 2026-11-05
   function parseDate(s) {
     s = String(s || "").trim();
@@ -202,7 +225,7 @@
     const d = eventDate(e);
     const diff = daysFromToday(d);
     const when = diff === 0 ? "היום" : diff === 1 ? "מחר" : diff > 1 && diff < 7 ? `בעוד ${diff} ימים` : "";
-    let details = [];
+    let details = [hebDate(d, false)];
     if (!e.allDay) details.push(new Date(e.start).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", timeZone: CFG.timezone }));
     if (e.allDay && e.end) {
       const last = parseDate(e.end); last.setDate(last.getDate() - 1); // בגוגל תאריך הסיום לא כלול
@@ -240,15 +263,125 @@
     el.innerHTML = events.length ? events.slice(0, 4).map(eventHtml).join("") : `<p class="empty">אין אירועים קרובים.</p>`;
   }
 
+  // ---------- לוח שנה חודשי: תאריך לועזי + עברי, חגים ואירועי הכיתה ----------
+  const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  function hebParts(d) {
+    const p = Object.fromEntries(HEB_FMT.formatToParts(d).map((x) => [x.type, x.value]));
+    return { day: +p.day, month: p.month, year: +p.year };
+  }
+
+  // חגים ומועדים בעברית מ-Hebcal (שירות חינמי)
+  const holidayCache = {};
+  function loadHolidays(start, end) {
+    const key = isoDay(start);
+    if (!holidayCache[key]) {
+      const p = new URLSearchParams({ v: "1", cfg: "json", maj: "on", min: "on", mod: "on", nx: "on", mf: "on", i: "on", lg: "he", start: isoDay(start), end: isoDay(end) });
+      holidayCache[key] = fetch(`https://www.hebcal.com/hebcal?${p}`)
+        .then((r) => r.json())
+        .then((d) => (d.items || []).map((i) => ({ date: i.date.slice(0, 10), title: i.hebrew || i.title })))
+        .catch(() => []);
+    }
+    return holidayCache[key];
+  }
+
+  // אירועי הכיתה מ-Google Calendar (צריך מפתח API ב-config.js)
+  function loadClassEvents(start, end) {
+    if (!CAL_MODE || !CFG.apiKey) return Promise.resolve(null);
+    const p = new URLSearchParams({ key: CFG.apiKey, singleEvents: "true", orderBy: "startTime", maxResults: "250", timeMin: start.toISOString(), timeMax: end.toISOString(), timeZone: CFG.timezone });
+    return fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CFG.calendarId)}/events?${p}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => (d.items || []).map((e) => ({ title: e.summary || "(ללא כותרת)", start: e.start.dateTime || e.start.date, end: e.end && (e.end.dateTime || e.end.date), allDay: !e.start.dateTime })))
+      .catch(() => null);
+  }
+
+  let calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+  let calToken = 0;
+
   function renderCalendar() {
     const el = $("calendar");
-    if (!CAL_MODE) {
-      el.innerHTML = `<div class="placeholder">כאן יופיע יומן הכיתה מ-Google Calendar.<br>מוסיפים את מזהה היומן בקובץ <code>config.js</code> (שדה calendarId).</div>`;
-      return;
+    el.innerHTML = `
+      <div class="cal-head">
+        <button class="cal-nav" data-step="-1" aria-label="החודש הקודם">›</button>
+        <div class="cal-title" id="cal-title"></div>
+        <button class="cal-nav" data-step="1" aria-label="החודש הבא">‹</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend muted">
+        <span><i class="dot hol"></i>חגים ומועדים</span>
+        <span><i class="dot evt"></i>אירועי הכיתה</span>
+        <button class="linklike" id="cal-today-btn">חזרה להיום</button>
+      </div>
+      <div class="cal-list" id="cal-list"></div>
+      <div id="cal-extra"></div>`;
+    el.querySelectorAll(".cal-nav").forEach((b) => b.addEventListener("click", () => {
+      calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + +b.dataset.step, 1);
+      drawMonth();
+    }));
+    $("cal-today-btn").addEventListener("click", () => { calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); drawMonth(); });
+    drawMonth();
+  }
+
+  async function drawMonth() {
+    const token = ++calToken;
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+    const gridStart = addDays(first, -first.getDay());
+    const gridEnd = addDays(last, 6 - last.getDay());
+
+    const h1 = hebParts(first), h2 = hebParts(last);
+    const hebMonths = h1.month === h2.month ? h1.month : `${h1.month}–${h2.month}`;
+    $("cal-title").innerHTML = `<strong>${esc(fmt(first, { month: "long", year: "numeric" }))}</strong><span>${esc(hebMonths)} ${esc(gematria(h2.year % 1000))}</span>`;
+
+    const paint = (byDay) => {
+      let html = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "שבת"].map((d) => `<div class="cal-wd">${d}</div>`).join("");
+      for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) {
+        const hp = hebParts(d);
+        const items = byDay[isoDay(d)] || [];
+        const cls = ["cal-cell", d.getMonth() !== m && "out", +d === +TODAY && "today", d.getDay() === 6 && "sat"].filter(Boolean).join(" ");
+        const hebLabel = hp.day === 1 ? `${gematria(1)} ${hp.month}` : gematria(hp.day);
+        html += `<div class="${cls}">
+          <div class="cal-dates"><span class="g">${d.getDate()}</span><span class="h">${esc(hebLabel)}</span></div>
+          ${items.map((i) => `<div class="chip ${i.type}" title="${esc(i.title)}">${esc(i.title)}</div>`).join("")}
+        </div>`;
+      }
+      $("cal-grid").innerHTML = html;
+    };
+    paint({});
+
+    const [hol, evts] = await Promise.all([loadHolidays(gridStart, gridEnd), loadClassEvents(gridStart, addDays(gridEnd, 1))]);
+    if (token !== calToken) return; // המשתמש כבר עבר לחודש אחר
+
+    const byDay = {};
+    const add = (key, item) => (byDay[key] = byDay[key] || []).push(item);
+    hol.forEach((h) => add(h.date, { type: "hol", title: h.title }));
+    (evts || []).forEach((e) => {
+      if (e.allDay) {
+        const s0 = parseDate(e.start), e0 = e.end ? parseDate(e.end) : addDays(s0, 1); // בגוגל יום הסיום לא כלול
+        for (let d = s0; d < e0; d = addDays(d, 1)) add(isoDay(d), { type: "evt", title: e.title });
+      } else {
+        const t = new Date(e.start);
+        add(isoDay(t), { type: "evt", title: `${t.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", timeZone: CFG.timezone })} ${e.title}` });
+      }
+    });
+    paint(byDay);
+
+    // רשימת החודש מתחת ללוח (נוחה במיוחד בטלפון)
+    let list = "";
+    for (let d = first; d <= last; d = addDays(d, 1)) {
+      const items = byDay[isoDay(d)];
+      if (!items) continue;
+      list += `<div class="cal-row${+d === +TODAY ? " today" : ""}">
+        <div class="when"><strong>${esc(fmt(d, { weekday: "short", day: "numeric", month: "numeric" }))}</strong><span>${esc(hebDate(d, false))}</span></div>
+        <div class="what">${items.map((i) => `<span class="chip ${i.type}">${esc(i.title)}</span>`).join("")}</div>
+      </div>`;
     }
-    const mobile = window.matchMedia("(max-width: 760px)").matches;
-    // בטלפון תצוגת חודש של גוגל צפופה מדי, לכן מציגים שבוע
-    el.innerHTML = `<iframe class="calendar-frame" title="לוח שנה" src="${esc(calendarEmbedUrl(mobile ? "WEEK" : "MONTH"))}"></iframe>`;
+    $("cal-list").innerHTML = list || `<p class="empty">אין חגים או אירועים בחודש הזה.</p>`;
+
+    // בלי מפתח API אי אפשר לשלב את אירועי הכיתה בלוח, אז מציגים אותם מתחת מהיומן של גוגל
+    $("cal-extra").innerHTML = CAL_MODE && evts === null
+      ? `<h3 class="month-title" style="margin-top:20px">אירועי הכיתה</h3><iframe class="calendar-frame" title="אירועי הכיתה" src="${esc(calendarEmbedUrl("AGENDA"))}"></iframe>`
+      : "";
   }
 
   // ---------- הודעות, קישורים ----------
@@ -257,7 +390,7 @@
     const items = (rows || []).slice(1).filter((r) => (r[1] || r[2] || "").trim());
     items.sort((a, b) => (parseDate(b[0]) || 0) - (parseDate(a[0]) || 0));
     el.innerHTML = items.length ? items.map((r) => `<div class="announcement">
-        <span class="date">${esc(r[0])}</span><h3>${esc(r[1])}</h3>${r[2] ? `<p>${esc(r[2])}</p>` : ""}</div>`).join("")
+        <span class="date">${esc(r[0])}${parseDate(r[0]) ? ` · ${esc(hebDate(parseDate(r[0]), false))}` : ""}</span><h3>${esc(r[1])}</h3>${r[2] ? `<p>${esc(r[2])}</p>` : ""}</div>`).join("")
       : `<p class="empty">אין הודעות כרגע.</p>`;
   }
 
@@ -312,7 +445,7 @@
   $("class-name").textContent = CFG.className || "אתר הכיתה";
   document.title = CFG.className || "אתר הכיתה";
   $("school-name").textContent = CFG.schoolName || "";
-  $("today-label").textContent = fmt(new Date(), { weekday: "long", day: "numeric", month: "long" });
+  $("today-label").innerHTML = `${esc(fmt(new Date(), { weekday: "long", day: "numeric", month: "long" }))}<span class="heb-date">${esc(hebDate(new Date()))}</span>`;
   if (!SHEET_MODE || !CAL_MODE) $("demo-banner").hidden = false;
 
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { location.hash = b.dataset.tab; }));

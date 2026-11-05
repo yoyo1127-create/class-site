@@ -26,14 +26,14 @@ window.CLASS_CONFIG = {
   // קיר הכיתה (Firebase). מדביקים כאן את ההגדרות מ-Firebase, לפי שלב 6 במדריך.
   // הערכים האלה לא סודיים, ומותר שיהיו גלויים באתר.
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    appId: "",
+    apiKey: "AIzaSyA-WyHlSpr2_DPuAbirriON2FgVGjqYiQU",
+    authDomain: "yoyo-class.firebaseapp.com",
+    projectId: "yoyo-class",
+    appId: "1:973933729885:web:8d8cd5347a74a2fc8055b4",
   },
 
   // מי יכול למחוק כל הודעה בקיר (מורה/מנהלי האתר). אותם מיילים צריכים להופיע גם בקובץ firestore.rules
-  admins: [],
+  admins: ["shomron.avi@gmail.com", "yoyo@datalab.cs.biu.ac.il"],
 
   // שמות הלשוניות בתוך ה-Google Sheet (צריכים להיות זהים בדיוק)
   sheets: {

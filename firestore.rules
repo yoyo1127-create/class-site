@@ -9,7 +9,8 @@ service cloud.firestore {
     // מחליפים את המייל לדוגמה במיילים האמיתיים, ומוסיפים אותם גם ל-admins בקובץ config.js
     function isAdmin() {
       return request.auth != null && request.auth.token.email in [
-        "teacher@example.com"
+        "shomron.avi@gmail.com",
+        "yoyo@datalab.cs.biu.ac.il"
       ];
     }
 

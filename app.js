@@ -60,9 +60,17 @@
     const name = CFG.sheets[key];
     const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(CFG.sheetId)}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(name)}`;
     cache[key] = fetch(url)
-      .then((r) => { if (!r.ok) throw new Error(); return r.text(); })
+      .then((r) => {
+        if (!r.ok || !/csv|text\/plain/.test(r.headers.get("content-type") || "")) throw new Error();
+        return r.text();
+      })
       .then((t) => parseCSV(t).filter((r) => r.some((c) => c.trim() !== "")))
-      .catch(() => { throw new Error(`לא הצלחנו לטעון את הלשונית "${name}" מה-Google Sheet. בדקו שהשיתוף מוגדר ל"כל מי שיש לו את הקישור" ושהשם של הלשונית נכון.`); });
+      .catch(() => {
+        // אם הגיליון לא נגיש (למשל השיתוף עוד לא "כל מי שיש לו את הקישור"), מציגים את העותק השמור באתר
+        console.warn(`לא הצלחנו לטעון את הלשונית "${name}" מה-Google Sheet. מציגים עותק שמור. בדקו שהשיתוף מוגדר ל"כל מי שיש לו את הקישור".`);
+        if (DEMO[key]) return DEMO[key];
+        throw new Error(`לא הצלחנו לטעון את הלשונית "${name}" מה-Google Sheet.`);
+      });
     return cache[key];
   }
 
@@ -305,7 +313,7 @@
   document.title = CFG.className || "אתר הכיתה";
   $("school-name").textContent = CFG.schoolName || "";
   $("today-label").textContent = fmt(new Date(), { weekday: "long", day: "numeric", month: "long" });
-  if (!SHEET_MODE || !CAL_MODE || !(CFG.firebase && CFG.firebase.apiKey)) $("demo-banner").hidden = false;
+  if (!SHEET_MODE || !CAL_MODE) $("demo-banner").hidden = false;
 
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { location.hash = b.dataset.tab; }));
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));

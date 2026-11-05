@@ -12,7 +12,7 @@ window.CLASS_CONFIG = {
   schoolName: "בית ספר אור זבולון, אריאל",
 
   // המזהה של ה-Google Sheet (החלק הארוך בכתובת שבין /d/ ל-/edit)
-  sheetId: "",
+  sheetId: "1sHTzTT1_PlZjV0nMjFVBsPmQz4xquJM7jXxdoskNq0k",
 
   // המזהה של היומן בגוגל (נראה בערך כך: abc123...@group.calendar.google.com)
   calendarId: "c_f352eb49b5b1211c2013d898cf2bf091f6e0f5e99192028e6176fbc97d1b1098@group.calendar.google.com",

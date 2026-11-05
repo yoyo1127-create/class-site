@@ -19,7 +19,7 @@ window.CLASS_CONFIG = {
 
   // מפתח API של גוגל (לא חובה). בלעדיו כרטיסיית "אירועים קרובים"
   // מוצגת בתצוגת הרשימה של גוגל במקום ברשימה המעוצבת שלנו.
-  apiKey: "",
+  apiKey: "AIzaSyDwcETLbSMRC_Sv2hMT35Nl18xSBpQn7wo",
 
   timezone: "Asia/Jerusalem",
 

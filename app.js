@@ -225,7 +225,7 @@
     const d = eventDate(e);
     const diff = daysFromToday(d);
     const when = diff === 0 ? "היום" : diff === 1 ? "מחר" : diff > 1 && diff < 7 ? `בעוד ${diff} ימים` : "";
-    let details = [hebDate(d, false)];
+    let details = [];
     if (!e.allDay) details.push(new Date(e.start).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", timeZone: CFG.timezone }));
     if (e.allDay && e.end) {
       const last = parseDate(e.end); last.setDate(last.getDate() - 1); // בגוגל תאריך הסיום לא כלול
@@ -233,9 +233,10 @@
     }
     if (e.location) details.push(e.location);
     return `<div class="event">
-      <div class="event-date"><span class="day">${d.getDate()}</span><span class="wd">${fmt(d, { weekday: "short" })}</span></div>
+      <div class="event-date"><span class="day">${d.getDate()}</span><span class="wd">${fmt(d, { weekday: "short" })}</span><span class="hd">${esc(gematria(hebParts(d).day))}</span></div>
       <div class="event-body">
         <h3>${esc(e.title)}${when ? `<span class="badge">${when}</span>` : ""}</h3>
+        <p class="heb-line">${esc(fmt(d, { weekday: "long", day: "numeric", month: "long" }))} · ${esc(hebDate(d))}</p>
         ${details.length ? `<p>${esc(details.join(" · "))}</p>` : ""}
         ${e.description ? `<p>${esc(e.description.replace(/<[^>]*>/g, " "))}</p>` : ""}
       </div></div>`;
@@ -250,8 +251,15 @@
     if (!events.length) { el.innerHTML = `<p class="empty">אין אירועים קרובים.</p>`; return; }
     let html = "", lastMonth = "";
     for (const e of events) {
-      const month = fmt(eventDate(e), { month: "long", year: "numeric" });
-      if (month !== lastMonth) { html += `<h3 class="month-title">${esc(month)}</h3>`; lastMonth = month; }
+      const ed = eventDate(e);
+      const month = fmt(ed, { month: "long", year: "numeric" });
+      if (month !== lastMonth) {
+        const y = ed.getFullYear(), mo = ed.getMonth();
+        const h1 = hebParts(new Date(y, mo, 1)), h2 = hebParts(new Date(y, mo + 1, 0));
+        const heb = `${h1.month === h2.month ? h1.month : `${h1.month}–${h2.month}`} ${gematria(h2.year % 1000)}`;
+        html += `<h3 class="month-title">${esc(month)} <span class="muted">· ${esc(heb)}</span></h3>`;
+        lastMonth = month;
+      }
       html += eventHtml(e);
     }
     el.innerHTML = html;

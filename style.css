@@ -325,3 +325,6 @@ table.schedule { width: 100%; border-collapse: separate; border-spacing: 4px; mi
   .cal-cell .chip.hol { background: #ffd43b; }
   .cal-cell .chip.evt { background: var(--primary); }
 }
+.event-date .hd { display: block; font-size: .75rem; border-top: 1px solid rgba(59,91,219,.25); margin: 3px 8px 0; padding-top: 2px; }
+.event-body .heb-line { color: var(--muted); font-size: .85rem; margin: 2px 0 0; }
+.month-title .muted { font-weight: 400; font-size: .9rem; }

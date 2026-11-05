@@ -243,7 +243,7 @@
     el.innerHTML = `<iframe class="calendar-frame" title="לוח שנה" src="${esc(calendarEmbedUrl(mobile ? "WEEK" : "MONTH"))}"></iframe>`;
   }
 
-  // ---------- הודעות, שיעורי בית, קישורים ----------
+  // ---------- הודעות, קישורים ----------
   function renderAnnouncements(rows) {
     const el = $("home-announcements");
     const items = (rows || []).slice(1).filter((r) => (r[1] || r[2] || "").trim());
@@ -251,26 +251,6 @@
     el.innerHTML = items.length ? items.map((r) => `<div class="announcement">
         <span class="date">${esc(r[0])}</span><h3>${esc(r[1])}</h3>${r[2] ? `<p>${esc(r[2])}</p>` : ""}</div>`).join("")
       : `<p class="empty">אין הודעות כרגע.</p>`;
-  }
-
-  function renderHomework(rows) {
-    const el = $("homework");
-    const items = (rows || []).slice(1).filter((r) => (r[1] || "").trim()).map((r) => ({ subject: r[0], task: r[1], dueText: r[2], due: parseDate(r[2]) }));
-    items.sort((a, b) => (a.due ? a.due : Infinity) - (b.due ? b.due : Infinity));
-    if (!items.length) { el.innerHTML = `<p class="empty">אין שיעורי בית כרגע 🎉</p>`; return; }
-    el.innerHTML = items.map((h) => {
-      let cls = "", label = h.dueText ? `להגשה: ${h.dueText}` : "";
-      if (h.due) {
-        const diff = daysFromToday(h.due);
-        if (diff < 0) { cls = "late"; label = `עבר מועד ההגשה (${h.dueText})`; }
-        else if (diff === 0) { cls = "soon"; label = "להגשה היום!"; }
-        else if (diff === 1) { cls = "soon"; label = "להגשה מחר"; }
-        else label = `להגשה ${fmt(h.due, { weekday: "long", day: "numeric", month: "numeric" })}`;
-      }
-      return `<div class="hw${cls === "late" ? " done" : ""}">
-        <span class="subject" style="background:${subjectColor(h.subject)}">${esc(h.subject)}</span>
-        <div class="task">${esc(h.task)}<div class="due ${cls}">${esc(label)}</div></div></div>`;
-    }).join("");
   }
 
   function renderLinks(rows) {
@@ -295,7 +275,7 @@
       schedule: () => loadSheet("schedule").then(renderSchedule, (e) => showError($("schedule"), e)),
       calendar: renderCalendar,
       events: () => loadEvents().then(renderEvents, (e) => showError($("events"), e)),
-      homework: () => loadSheet("homework").then(renderHomework, (e) => showError($("homework"), e)),
+      chat: () => window.initChat && window.initChat(),
       links: () => loadSheet("links").then(renderLinks, (e) => showError($("links"), e)),
     };
     jobs[tab]();
@@ -318,7 +298,7 @@
   document.title = CFG.className || "אתר הכיתה";
   $("school-name").textContent = CFG.schoolName || "";
   $("today-label").textContent = fmt(new Date(), { weekday: "long", day: "numeric", month: "long" });
-  if (!SHEET_MODE || !CAL_MODE) $("demo-banner").hidden = false;
+  if (!SHEET_MODE || !CAL_MODE || !(CFG.firebase && CFG.firebase.apiKey)) $("demo-banner").hidden = false;
 
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { location.hash = b.dataset.tab; }));
   window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));

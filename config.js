@@ -23,11 +23,22 @@ window.CLASS_CONFIG = {
 
   timezone: "Asia/Jerusalem",
 
+  // קיר הכיתה (Firebase). מדביקים כאן את ההגדרות מ-Firebase, לפי שלב 6 במדריך.
+  // הערכים האלה לא סודיים, ומותר שיהיו גלויים באתר.
+  firebase: {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    appId: "",
+  },
+
+  // מי יכול למחוק כל הודעה בקיר (מורה/מנהלי האתר). אותם מיילים צריכים להופיע גם בקובץ firestore.rules
+  admins: [],
+
   // שמות הלשוניות בתוך ה-Google Sheet (צריכים להיות זהים בדיוק)
   sheets: {
     schedule: "מערכת שעות",
     announcements: "הודעות",
-    homework: "שיעורי בית",
     links: "קישורים",
   },
 };

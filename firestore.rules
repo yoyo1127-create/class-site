@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// חוקי האבטחה של קיר הכיתה.
+// מעתיקים את כל הקובץ ל: Firebase Console ← Firestore Database ← Rules ← Publish
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // מי יכול למחוק כל הודעה (מורה/מנהלי האתר).
+    // מחליפים את המייל לדוגמה במיילים האמיתיים, ומוסיפים אותם גם ל-admins בקובץ config.js
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email in [
+        "teacher@example.com"
+      ];
+    }
+
+    match /messages/{messageId} {
+      // כולם יכולים לקרוא, גם בלי להתחבר
+      allow read: if true;
+
+      // כתיבה: רק משתמש מחובר, בשמו האמיתי מגוגל, עד 500 תווים
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['text', 'name', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name == request.auth.token.get('name', '')
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time;
+        // כדי לאפשר כתיבה רק לחשבונות של בית הספר, מוסיפים לפני ה-; :
+        // && request.auth.token.email.matches('.*@educ[.]org[.]il$')
+
+      // מחיקה: הכותב עצמו או מנהל. אי אפשר לערוך הודעה קיימת.
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isAdmin());
+      allow update: if false;
+    }
+  }
+}

@@ -183,15 +183,72 @@ table.schedule { width: 100%; border-collapse: separate; border-spacing: 4px; mi
 .announcement .date { font-size: .85rem; color: var(--muted); }
 .announcement p { margin: 4px 0 0; white-space: pre-line; }
 
-/* ---------- שיעורי בית ---------- */
-.hw { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.hw:last-child { border-bottom: 0; }
-.hw .subject { flex: 0 0 auto; padding: 4px 10px; border-radius: 8px; font-size: .9rem; font-weight: 500; }
-.hw .task { flex: 1; white-space: pre-line; }
-.hw .due { font-size: .85rem; color: var(--muted); white-space: nowrap; }
-.hw .due.soon { color: var(--accent); font-weight: 500; }
-.hw .due.late { color: var(--danger); }
-.hw.done { opacity: .5; }
+/* ---------- קיר הכיתה ---------- */
+.chat-sub { margin: -8px 0 12px; font-size: .9rem; }
+.chat-list {
+  height: min(60vh, 560px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #f7f8fb;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.msg { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+.msg.mine { align-self: flex-end; flex-direction: row-reverse; }
+.avatar {
+  flex: 0 0 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: .9rem; color: #fff;
+}
+.bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 4px;
+  padding: 8px 12px;
+  min-width: 0;
+}
+.msg.mine .bubble { background: var(--primary-soft); border-color: #cdd7ff; border-radius: 14px 14px 4px 14px; }
+.bubble .who { font-size: .8rem; font-weight: 700; color: var(--primary); }
+.bubble .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble .meta { display: flex; gap: 10px; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.bubble .del { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0; }
+.bubble .del:hover { color: var(--danger); }
+.day-sep { align-self: center; font-size: .78rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 10px; border-radius: 999px; }
+
+.composer { margin-top: 12px; }
+.composer form { display: flex; gap: 8px; align-items: flex-end; }
+.composer textarea {
+  flex: 1;
+  font: inherit;
+  resize: none;
+  min-height: 44px;
+  max-height: 140px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+.composer textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.btn {
+  font: inherit;
+  font-weight: 500;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.google { display: inline-flex; align-items: center; gap: 10px; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.composer .signed { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; color: var(--muted); margin-top: 6px; }
+.linklike { font: inherit; border: 0; background: none; color: var(--primary); cursor: pointer; padding: 0; }
+.composer .note { font-size: .85rem; color: var(--muted); margin: 8px 0 0; }
 
 /* ---------- קישורים ---------- */
 .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }

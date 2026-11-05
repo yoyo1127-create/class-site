@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>אתר הכיתה</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div>
+        <h1 id="class-name">אתר הכיתה</h1>
+        <p id="school-name" class="muted"></p>
+      </div>
+      <p id="today-label" class="today-label"></p>
+    </div>
+    <nav class="tabs wrap" role="tablist">
+      <button class="tab" data-tab="home" role="tab">🏠 ראשי</button>
+      <button class="tab" data-tab="schedule" role="tab">🕘 מערכת שעות</button>
+      <button class="tab" data-tab="calendar" role="tab">📅 לוח שנה</button>
+      <button class="tab" data-tab="events" role="tab">📋 אירועים קרובים</button>
+      <button class="tab" data-tab="homework" role="tab">📝 שיעורי בית</button>
+      <button class="tab" data-tab="links" role="tab">🔗 קישורים</button>
+    </nav>
+  </header>
+
+  <div id="demo-banner" class="demo-banner wrap" hidden>
+    מצב הדגמה: מוצגים נתונים לדוגמה. כדי לחבר את הנתונים האמיתיים, מלאו את הקובץ <code>config.js</code> לפי המדריך.
+  </div>
+
+  <main class="wrap">
+    <!-- ראשי -->
+    <section id="tab-home" class="panel">
+      <div class="grid">
+        <article class="card">
+          <h2>היום במערכת</h2>
+          <div id="home-today"></div>
+        </article>
+        <article class="card">
+          <h2>אירועים קרובים</h2>
+          <div id="home-events"></div>
+        </article>
+        <article class="card span-2">
+          <h2>📌 לוח מודעות</h2>
+          <div id="home-announcements"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- מערכת שעות -->
+    <section id="tab-schedule" class="panel">
+      <article class="card">
+        <h2>מערכת שעות</h2>
+        <div id="schedule"></div>
+      </article>
+    </section>
+
+    <!-- לוח שנה -->
+    <section id="tab-calendar" class="panel">
+      <article class="card">
+        <h2>לוח שנה</h2>
+        <div id="calendar"></div>
+      </article>
+    </section>
+
+    <!-- אירועים כרשימה -->
+    <section id="tab-events" class="panel">
+      <article class="card">
+        <h2>אירועים קרובים</h2>
+        <div id="events"></div>
+      </article>
+    </section>
+
+    <!-- שיעורי בית -->
+    <section id="tab-homework" class="panel">
+      <article class="card">
+        <h2>שיעורי בית ומטלות</h2>
+        <div id="homework"></div>
+      </article>
+    </section>
+
+    <!-- קישורים -->
+    <section id="tab-links" class="panel">
+      <article class="card">
+        <h2>קישורים שימושיים</h2>
+        <div id="links" class="links-grid"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="wrap footer muted">התוכן מתעדכן אוטומטית מה-Google Sheet ומיומן הכיתה.</footer>
+
+  <script src="config.js"></script>
+  <script src="demo-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

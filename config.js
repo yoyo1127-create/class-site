@@ -6,7 +6,7 @@
 
 window.CLASS_CONFIG = {
   // שם הכיתה שיופיע בראש האתר
-  className: "הכיתה שלנו",
+  className: "כיתה ה'2",
 
   // שם בית הספר (לא חובה)
   schoolName: "",

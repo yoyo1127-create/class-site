@@ -109,12 +109,18 @@
 
     // טבלה מלאה (מחשב/טאבלט)
     const th = head.map((h, i) => `<th class="${i === todayCol ? "today" : ""}">${esc(h)}${i === todayCol ? " · היום" : ""}</th>`).join("");
-    const tr = body.map((r) => "<tr>" + head.map((_, i) => {
-      const v = (r[i] || "").trim();
-      if (i === 0) return `<td class="hour"><bdi dir="ltr">${esc(v)}</bdi></td>`;
-      if (!v) return `<td class="blank"></td>`;
-      return `<td class="${i === todayCol ? "today" : ""}" style="background:${subjectColor(v)}">${esc(v)}</td>`;
-    }).join("") + "</tr>").join("");
+    const tr = body.map((r) => {
+      if (isBreak(r)) {
+        const [label, time] = splitHour(r[0]);
+        return `<tr class="break-row"><td class="hour"><bdi dir="ltr">${esc(time)}</bdi></td><td colspan="${head.length - 1}">${esc(label)}</td></tr>`;
+      }
+      return "<tr>" + head.map((_, i) => {
+        const v = (r[i] || "").trim();
+        if (i === 0) return `<td class="hour"><bdi dir="ltr">${esc(v)}</bdi></td>`;
+        if (!v) return `<td class="blank"></td>`;
+        return `<td class="${i === todayCol ? "today" : ""}" style="background:${subjectColor(v)}">${esc(v)}</td>`;
+      }).join("") + "</tr>";
+    }).join("");
 
     // תצוגת יום אחד (טלפון)
     const startCol = todayCol > 0 ? todayCol : days[0].col;
@@ -140,10 +146,27 @@
     showDay(startCol);
   }
 
+  // שורת הפסקה = שורה שבה רק העמודה הראשונה מלאה, למשל "הפסקה · 9:40–9:55"
+  function isBreak(r) { return r.slice(1).every((c) => !(c || "").trim()); }
+  function splitHour(h) {
+    const i = String(h).indexOf("·");
+    return i < 0 ? [String(h).trim(), ""] : [h.slice(0, i).trim(), h.slice(i + 1).trim()];
+  }
+
   function dayLessons(body, col) {
-    return body.filter((r) => (r[col] || "").trim())
-      .map((r) => `<li style="background:${subjectColor(r[col].trim())}"><span class="num"><bdi dir="ltr">${esc(r[0])}</bdi></span><span>${esc(r[col])}</span></li>`)
-      .join("");
+    const has = (r) => (r[col] || "").trim();
+    const first = body.findIndex(has);
+    let last = -1;
+    body.forEach((r, i) => { if (has(r)) last = i; });
+    if (first < 0) return "";
+    return body.slice(first, last + 1).map((r) => {
+      if (isBreak(r)) {
+        const [label, time] = splitHour(r[0]);
+        return `<li class="break-item"><span class="num"><bdi dir="ltr">${esc(time)}</bdi></span><span>${esc(label)}</span></li>`;
+      }
+      if (!has(r)) return "";
+      return `<li style="background:${subjectColor(r[col].trim())}"><span class="num"><bdi dir="ltr">${esc(r[0])}</bdi></span><span>${esc(r[col])}</span></li>`;
+    }).join("");
   }
 
   function renderHomeToday(rows) {
